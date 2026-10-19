@@ -8,8 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "next typegen && tsc --noEmit",
-    "test": "node --experimental-strip-types --test --test-isolation=none tests/*.test.mjs"
+    "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
     "bcryptjs": "3.0.3",

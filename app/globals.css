@@ -1,13 +1,6 @@
 ﻿@import "tailwindcss";
 
-/* 기존 로컬 글꼴을 유지하고 색·간격·선만으로 화면을 구분합니다. */
-@font-face {
-  font-family: "Pretendard";
-  src: url("/fonts/PretendardVariable.woff2") format("woff2");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
+/* 별도 글꼴 파일을 내려받지 않고 기기에 설치된 시스템 글꼴을 사용합니다. */
 :root {
   --ground: #ffffff;
   --surface: #ffffff;
@@ -19,7 +12,7 @@
   --primary: #222222;
   --error-ink: #a32620;
   --warning-ink: #795514;
-  --font: "Pretendard", "Malgun Gothic", sans-serif;
+  --font: system-ui, "Malgun Gothic", sans-serif;
 }
 @theme inline {
   --color-background: var(--ground);
