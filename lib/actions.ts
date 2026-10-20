@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { AuthError } from "next-auth";
 import { revalidatePath } from "next/cache";
@@ -26,12 +26,12 @@ export async function saveMacroRecordAction(formData: FormData) {
   try {
     user = await getCurrentUser();
   } catch {
-    redirect("/dashboard?error=save");
+    redirect("/?error=save");
   }
-  if (!user) redirect("/login?next=/dashboard");
+  if (!user) redirect("/login?notice=auth&next=/");
   const input = readMacroInput(formData);
-  if (Object.keys(validateMacroInput(input)).length) redirect("/dashboard?error=input");
-  if (!calculateMacros(input).isFeasible) redirect("/dashboard?error=infeasible");
+  if (Object.keys(validateMacroInput(input)).length) redirect("/?error=input");
+  if (!calculateMacros(input).isFeasible) redirect("/?error=infeasible");
   try {
     await createMacroRecord(user.id, input);
   } catch (error) {
@@ -39,13 +39,13 @@ export async function saveMacroRecordAction(formData: FormData) {
       "기록 저장 실패:",
       error instanceof Error ? error.name : "UnknownError",
     );
-    redirect("/dashboard?error=save");
+    redirect("/?error=save");
   }
   // 수정된 입력과 재계산 결과가 홈, 계산 기록, 식단 기록의 목표치에 즉시 반영되도록 재검증합니다.
   revalidatePath("/");
   revalidatePath("/dashboard");
   revalidatePath("/meals");
-  redirect("/dashboard?notice=updated");
+  redirect("/?notice=updated");
 }
 
 export async function registerAction(formData: FormData) {
