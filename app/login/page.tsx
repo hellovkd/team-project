@@ -86,9 +86,6 @@ export default async function LoginPage({ searchParams }: Props) {
           <Link href="/register">회원가입</Link>
         </p>
       </section>
-      <Link href="/" className="back-link">
-        계산기
-      </Link>
     </main>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { FoodFields, emptyFoodFields, type FoodFieldValues } from "@/components/FoodFields";
+import { emptyFoodFields, type FoodFieldValues } from "@/components/FoodFields";
 import { SubmitButton } from "@/components/SubmitButton";
 import { createMealAction } from "@/lib/mealActions";
 import type { SavedFavoriteFood } from "@/lib/favoriteFoods";
@@ -60,6 +61,7 @@ export function MealForm({ date, favorites }: { date: string; favorites: SavedFa
       <div className="panel-header"><h2 id="meal-form-heading">음식 기록</h2></div>
       <form action={createMealAction} className="meal-form">
         <input type="hidden" name="date" value={date} />
+        {/* 음식 등록은 「내 음식」 화면에서만 하고, 여기서는 저장한 음식을 선택해 먹은 양만 입력합니다. */}
         <div className="meal-select-fields">
           <div className="field-group">
             <label htmlFor="meal-type">끼니</label>
@@ -69,17 +71,25 @@ export function MealForm({ date, favorites }: { date: string; favorites: SavedFa
           </div>
           <div className="field-group">
             <label htmlFor="meal-favorite">저장한 음식</label>
-            <select id="meal-favorite" value={favoriteId} onChange={(event) => selectFavorite(event.target.value)}>
-              <option value="">직접 입력</option>
+            <select id="meal-favorite" value={favoriteId} onChange={(event) => selectFavorite(event.target.value)} required>
+              <option value="">음식 선택</option>
               {favorites.map((food) => <option key={food.id} value={food.id}>{food.name}</option>)}
             </select>
           </div>
         </div>
-        <FoodFields
-          values={fields}
-          onChange={(next) => { setFields(next); setFavoriteId(""); }}
-          idPrefix="meal-food"
-        />
+        {favorites.length === 0 ? (
+          <p className="field-hint">저장한 음식이 없습니다. <Link href="/foods" className="text-link">내 음식</Link>에서 먼저 등록해주세요.</p>
+        ) : null}
+        {/* 선택한 음식의 기준량·영양정보를 숨은 값으로 보내 기존 Server Action의 검증·저장 흐름을 그대로 사용합니다. */}
+        {Object.entries({
+          name: fields.name,
+          baseAmount: fields.baseAmount,
+          unit: fields.unit,
+          calories: fields.calories,
+          carbs: fields.carbs,
+          protein: fields.protein,
+          fat: fields.fat,
+        }).map(([name, value]) => <input key={name} type="hidden" name={name} value={value} />)}
         <div className="field-group">
           <label htmlFor="meal-amount">먹은 양</label>
           <div className="input-with-unit">

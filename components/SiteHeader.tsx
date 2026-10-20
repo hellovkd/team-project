@@ -10,11 +10,10 @@ export async function SiteHeader() {
   return (
     <header className="site-header">
       <div className="header-inner">
-        <Link className="brand" href="/">
+        <Link className="brand" href="/meals">
           탄단지
         </Link>
         <nav className="header-navigation" aria-label="주 메뉴">
-          <Link href="/">계산기</Link>
           <Link href="/dashboard">계산 기록</Link>
           {/* 수업 헤더와 같은 일반 링크로 음식 등록과 끼니별 기록 화면을 연결합니다. */}
           <Link href="/meals">식단 기록</Link>

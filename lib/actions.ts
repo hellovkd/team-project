@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { AuthError } from "next-auth";
 import { revalidatePath } from "next/cache";
@@ -11,9 +11,6 @@ import {
   readMacroInput,
   validateMacroInput,
   calculateMacros,
-  type MacroInput,
-  type MacroResult,
-  type MacroFieldErrors,
 } from "@/lib/macroCalculator";
 import {
   normalizeEmail,
@@ -23,48 +20,32 @@ import {
 } from "@/lib/authValidation";
 import { authenticationConfigured } from "@/lib/config";
 
-export type CalculationResponse = {
-  input?: MacroInput;
-  result?: MacroResult;
-  error?: string;
-  fieldErrors?: MacroFieldErrors;
-};
-
-// 검증한 계산 결과를 반환해 클라이언트가 입력 오류와 결과를 상태에 반영하게 합니다.
-export async function calculateMacroAction(
-  formData: FormData,
-): Promise<CalculationResponse> {
-  const input = readMacroInput(formData);
-  const fieldErrors = validateMacroInput(input);
-  if (Object.keys(fieldErrors).length)
-    return { error: "입력한 정보를 확인해주세요.", fieldErrors };
-  return { input, result: calculateMacros(input) };
-}
-
+// 로그인한 사용자가 신체 정보와 목표를 수정하면 서버에서 다시 계산해 새 기록으로 저장합니다.
 export async function saveMacroRecordAction(formData: FormData) {
   let user;
   try {
     user = await getCurrentUser();
   } catch {
-    redirect("/?error=save");
+    redirect("/dashboard?error=save");
   }
-  if (!user) redirect("/login?notice=save&next=/");
+  if (!user) redirect("/login?next=/dashboard");
   const input = readMacroInput(formData);
-  if (Object.keys(validateMacroInput(input)).length) redirect("/?error=input");
-  if (!calculateMacros(input).isFeasible) redirect("/?error=infeasible");
-  let record;
+  if (Object.keys(validateMacroInput(input)).length) redirect("/dashboard?error=input");
+  if (!calculateMacros(input).isFeasible) redirect("/dashboard?error=infeasible");
   try {
-    record = await createMacroRecord(user.id, input);
+    await createMacroRecord(user.id, input);
   } catch (error) {
     console.error(
       "기록 저장 실패:",
       error instanceof Error ? error.name : "UnknownError",
     );
-    redirect("/?error=save");
+    redirect("/dashboard?error=save");
   }
-  // 저장 후 목록을 재검증하고 상세 화면으로 이동해 새 기록을 확인하게 합니다.
+  // 수정된 입력과 재계산 결과가 홈, 계산 기록, 식단 기록의 목표치에 즉시 반영되도록 재검증합니다.
+  revalidatePath("/");
   revalidatePath("/dashboard");
-  redirect(`/dashboard/${record.id}`);
+  revalidatePath("/meals");
+  redirect("/dashboard?notice=updated");
 }
 
 export async function registerAction(formData: FormData) {
@@ -81,9 +62,13 @@ export async function registerAction(formData: FormData) {
     Object.keys(validateMacroInput(bodySpec)).length
   )
     redirect("/register?error=input");
+  // 회원가입 시점에만 최초 탄단지 계산을 수행하므로 배분 가능한 조건인지 함께 검증합니다.
+  if (!calculateMacros(bodySpec).isFeasible)
+    redirect("/register?error=infeasible");
   try {
-    // 계정을 DB에 저장한 뒤 Credentials로 로그인합니다.
-    await createUser({ name, email, password, bodySpec });
+    // 계정을 DB에 생성하고 가입 시 입력한 신체 정보로 첫 탄단지 계산 기록을 함께 저장합니다.
+    const user = await createUser({ name, email, password, bodySpec });
+    await createMacroRecord(user.id, bodySpec);
   } catch (error) {
     const duplicate =
       error instanceof Error &&

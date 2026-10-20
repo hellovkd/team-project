@@ -11,12 +11,14 @@ export const metadata = { title: "회원가입" };
 const errors: Record<string, string> = {
   input:
     "이름, 이메일, 비밀번호와 신체 정보를 확인해주세요. 비밀번호는 8자 이상, UTF-8 72바이트 이하로 입력해주세요.",
+  infeasible:
+    "입력한 신체 정보와 목표에서는 탄단지 배분을 계산할 수 없습니다. 체중과 목표를 다시 확인해주세요.",
   duplicate: "이미 가입된 이메일입니다. 기존 계정으로 로그인해주세요.",
   database:
     "회원가입을 처리하지 못했습니다. 연결 상태를 확인한 뒤 다시 시도해주세요.",
 };
 
-// 계정과 신체 정보·활동량·목표를 함께 등록해 가입 후 계산기의 초기값으로 사용합니다.
+// 회원가입 시 계정과 신체 정보·목표를 함께 받아 최초 탄단지를 계산·저장합니다.
 export default async function RegisterPage({ searchParams }: Props) {
   const { error } = await searchParams;
   const configured = authenticationConfigured();

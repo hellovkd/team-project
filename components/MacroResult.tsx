@@ -105,7 +105,7 @@ export function MacroResult({
             </div>
           ))}
           <p className="rounding-note">
-            정수 g로 반올림한 섭취량 기준의 열량 비율입니다.
+            모든 소수점 섭취량은 반올림한 기준입니다.
           </p>
         </div>
       ) : (

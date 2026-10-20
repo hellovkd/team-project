@@ -1,19 +1,24 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Calculator } from "@/components/Calculator";
 import { getCurrentUser } from "@/lib/session";
 import { getMacroRecords } from "@/lib/macroRecords";
 import { goals } from "@/lib/macroCalculator";
 
+type Props = { searchParams: Promise<{ error?: string; notice?: string }> };
 export const metadata = { title: "계산 기록" };
 // 빌드 때 설정이 비어 있어도 로그인 안내를 정적 저장하지 않고 매 요청에서 세션을 확인합니다.
 export const dynamic = "force-dynamic";
 
-// 서버에서 사용자를 확인하고 개인 기록을 조회해 목록과 상세 링크를 표시합니다.
-export default async function DashboardPage() {
+// 서버에서 사용자를 확인하고 신체 정보 수정 폼과 개인 기록 목록·상세 링크를 함께 표시합니다.
+export default async function DashboardPage({ searchParams }: Props) {
+  const { error, notice } = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect("/login?next=/dashboard");
   const records = await getMacroRecords(user.id);
   const latest = records[0];
+  // 가입 시 신체 정보를 기본으로 사용하고 수정 이력이 있으면 최신 기록의 조건을 사용합니다.
+  const initial = latest ?? user.bodySpec;
   const oldest = records.at(-1);
   const change =
     latest && oldest && records.length > 1
@@ -21,12 +26,25 @@ export default async function DashboardPage() {
       : null;
   return (
     <main id="main" className="content-shell">
-      <div className="page-heading heading-with-action">
+      <div className="page-heading">
         <h1>계산 기록</h1>
-        <Link href="/" className="secondary-button">
-          새로 계산하기
-        </Link>
       </div>
+      {notice === "updated" ? (
+        <p className="notice info-notice" role="status">
+          신체 정보와 목표를 수정해 다시 계산했습니다.
+        </p>
+      ) : null}
+      {error ? (
+        <p className="notice error-notice" role="alert">
+          {error === "save"
+            ? "기록을 저장하지 못했습니다. 연결 상태를 확인하고 다시 시도해주세요."
+            : error === "infeasible"
+              ? "입력한 조건에서는 탄단지 배분을 계산할 수 없습니다. 체중과 목표를 다시 확인해주세요."
+              : "입력값과 목표를 확인한 뒤 다시 저장해주세요."}
+        </p>
+      ) : null}
+      <Calculator initial={initial} />
+      <p className="form-note">성인용 추정값이며 실제 필요량과 다를 수 있습니다.</p>
       <dl className="dashboard-summary surface-panel">
         <div>
           <dt>최근 저장 체중</dt>
@@ -106,9 +124,6 @@ export default async function DashboardPage() {
         ) : (
           <div className="empty-state surface-panel">
             <p>저장한 계산 기록이 없습니다.</p>
-            <Link href="/" className="text-link">
-              계산기
-            </Link>
           </div>
         )}
       </section>

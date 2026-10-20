@@ -1,47 +1,45 @@
-import { Calculator } from "@/components/Calculator";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
-import { getMacroRecords } from "@/lib/macroRecords";
 
-type Props = { searchParams: Promise<{ error?: string }> };
-
-// 서버 컴포넌트에서 DB 정보를 읽고 입력과 결과 UI만 클라이언트로 분리합니다.
-export default async function Home({ searchParams }: Props) {
-  const { error } = await searchParams;
+// 계산기는 계산 기록 화면으로 옮겼으므로, 로그인한 사용자는 그곳으로 이동시키고 비로그인은 가입 안내만 보여줍니다.
+export default async function Home() {
   let user;
-  let initial;
-  let profileError = false;
   try {
     user = await getCurrentUser();
-    if (user) {
-      const [latest] = await getMacroRecords(user.id);
-      // 가입 시 신체 정보를 기본으로 사용하고 저장 이력이 있으면 최신 기록의 조건을 사용합니다.
-      initial = latest ?? user.bodySpec;
-    }
   } catch (error) {
     console.error(
       "프로필 조회 실패:",
       error instanceof Error ? error.name : "UnknownError",
     );
-    profileError = true;
   }
+  if (user) redirect("/dashboard");
+
   return (
     <main id="main" className="content-shell">
-      {/* 인사말 대신 화면의 목적만 짧게 표시하고 바로 계산 폼으로 이어집니다. */}
-      <div className="page-heading"><h1>탄단지 계산기</h1></div>
-      {error ? (
-        <p className="notice error-notice" role="alert">
-          {error === "save"
-            ? "기록을 저장하지 못했습니다. 연결 상태를 확인하고 다시 시도해주세요."
-            : "입력값과 목표를 확인한 뒤 다시 계산해주세요."}
+      <div className="page-heading">
+        <h1>탄단지 및 칼로리 관리</h1>
+        <p>
+          탄단지 계산기는 따로 사용할 수 없으며, 회원가입할 때 신체 정보와
+          목표를 함께 입력해 맞춤 칼로리·탄단지를 계산합니다.
         </p>
-      ) : null}
-      {profileError ? (
-        <p className="notice warning-notice" role="alert">
-          회원 정보를 불러오지 못했습니다. 직접 입력해 계산할 수 있습니다.
+      </div>
+      <section className="surface-panel empty-state">
+        <h2>회원가입 후 나만의 탄단지를 확인하세요</h2>
+        <p>
+          가입 시 입력한 성별, 나이, 키, 체중, 활동량, 목표로 하루 권장 섭취량이
+          자동 계산되며, 가입 후에는 계산 기록 화면에서 입력 정보를 수정할 수
+          있습니다.
         </p>
-      ) : null}
-      <Calculator initial={initial} signedIn={Boolean(user)} />
-      <p className="form-note">성인용 추정값이며 실제 필요량과 다를 수 있습니다.</p>
+        <div className="meal-page-links">
+          <Link className="primary-button" href="/register">
+            회원가입하고 계산하기
+          </Link>
+          <Link className="secondary-button" href="/login">
+            로그인
+          </Link>
+        </div>
+      </section>
     </main>
   );
 }
