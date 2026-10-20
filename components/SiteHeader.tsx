@@ -10,7 +10,8 @@ export async function SiteHeader() {
   return (
     <header className="site-header">
       <div className="header-inner">
-        <Link className="brand" href="/meals">
+        {/* 로그인 상태에서는 식단 기록으로, 비로그인 상태에서는 처음 안내 페이지(/)로 이동합니다. */}
+        <Link className="brand" href={session?.user ? "/meals" : "/"}>
           탄단지
         </Link>
         <nav className="header-navigation" aria-label="주 메뉴">
